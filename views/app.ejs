@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Logged In</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+<body class='container'>
+  <div class="row">
+    <div class="col-sm-3"></div>
+    <div style="margin-top: 20px;"  class="col-sm-6 d-grid gap-3" >
+      <button onclick = 'onClick()' class='btn btn-dark' >Get Token From Code</button>
+      <p>Authorization Code: <span id='code'></span></p>
+      <p>Token: <span id='token'></span></p>
+     
+      <button onclick='accessSecretArea()' class='btn btn-dark'>Get Stats</button>
+      <p><code id='success'></code></p>
+    </div>
+    <div class="col-sm-3"></div>
+  </div>
+ 
+  <script>
+  let code
+  let token 
+  let tokenType
+  const secret = 'MyClientSecret' 
+  const id = 'myClientId' 
+  ;(function(){ 
+    const urlParams = new URLSearchParams(window.location.search) 
+    code = urlParams.get('code')
+    document.getElementById('code').innerText = code
+  }())
+  function onClick() {
+
+    fetch('/oauth/token', {
+      method: 'POST',
+      body: `code=${code}&client_secret=${secret}&client_id=${id}&grant_type=authorization_code&redirect_uri=http://localhost:3000/app`, 
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',  
+      },
+    })
+      .then(res => res.json())
+      .then(res => {
+        console.log('Credentials', res)
+        token = res.access_token
+        tokenType = res.token_type
+        document.getElementById('token').innerText = token
+      })
+      .catch(e => {
+        console.log(e)
+      })
+  }
+
+  function accessSecretArea() {
+    const authorization = `${tokenType} ${token}`
+    console.log('Bearer token:', authorization)
+    fetch('/secret', {
+      headers: new Headers({
+        Authorization: authorization,
+      }),
+    })
+      .then(res => res.json())
+      .then(res => {
+  document.getElementById('success').innerText = JSON.stringify(res,null,4)
+      })
+      .catch(e => {
+        console.error('Fail:',e)
+        document.getElementById('success').innerText = "Can't Access"
+      })
+  }
+  </script>
+</body>
+</html>
